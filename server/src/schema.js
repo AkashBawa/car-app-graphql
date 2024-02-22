@@ -101,7 +101,7 @@ const typeDefs = `
     }
 
     type Car {
-        id: ID!
+        id: String!
         year: String!
         make: String!
         model: String!
@@ -109,17 +109,27 @@ const typeDefs = `
         personId: String!
     }
 
+    type PersonWithCars {
+        id: String!
+        firstName: String!
+        lastName: String!
+        cars: [Car]
+    }
+
     type Query {
         person(id: String!): Person
         persons: [Person]
         car(id: String!): Car
         cars: [Car]
+        personWithCars: PersonWithCars
     }
 
     type Mutation {
         addPerson(id: String!, firstName: String!, lastName: String!): Person
         updatePerson(id: String!, firstName: String, lastName: String): Person
         removePerson(id: String!): Person
+        updateCar(id: String!, year: String!, make: String!, model: String!, price: String!, personId: String!): Car
+        removeCar(id:String!): Car
     }
 `
 
@@ -138,7 +148,18 @@ const resolvers = {
             return foundCar;
         },
 
-        cars: () => cars
+        cars: (root, args) => {
+            return cars;
+        },
+
+        personWithCars: (root, args) => {
+            let persons = [];
+            for(let i = 0; i < personArray.length; i++) {
+                let person = {...personArray[i]};
+                person.cars = _.filter(cars, { personId: person.id });   
+            }
+            return persons;
+        }
     },
 
     Mutation: {
@@ -179,6 +200,31 @@ const resolvers = {
                 throw new Error(`No such user exists to delete.`);
             }
             return contact[0];
+        },
+
+        
+        updateCar:(root, args) => {
+            let car = _.find(cars,{id : args.id});
+
+            if(!car) {
+                throw new Error("The car you are trying to update does not exist.")
+            }
+            console.log(car);
+            car.make = args.make;
+            car.model = args.model;
+            car.personId = args.personId;
+            car.price = args.price;
+            car.year = args.year;
+
+            return car;
+        },
+        removeCar:(root, args) => {
+            let car = _.remove(cars,{id : args.id});
+            console.log(car);
+            if(!car) {
+                throw new Error (`Car with id ${args.id} does not exists`);
+            }
+            return car[0]
         }
     }
 }
