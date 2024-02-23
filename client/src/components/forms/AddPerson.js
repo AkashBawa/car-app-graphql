@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button, Form, Input } from 'antd'
 import { useMutation } from '@apollo/client'
-import { ADD_PERSON, GET_PERSONS } from "./../graphql/queries";
+import { ADD_PERSON, GET_PERSONS, GET_PERSON_WITH_CAR } from "./../graphql/queries";
 
 const AddPerson = () => {
-    const [id] = useState(uuidv4())
     const [form] = Form.useForm()
     const [, forceUpdate] = useState()
 
@@ -16,7 +15,7 @@ const AddPerson = () => {
     }, [])
 
     const onFinish = values => {
-        
+        let id = uuidv4();
         const { firstName, lastName } = values;
         addPerson({
             variables: {
@@ -25,17 +24,28 @@ const AddPerson = () => {
                 lastName
             },
             update: (cache, { data: { addPerson } }) => {
-                const data = cache.readQuery({query: GET_PERSONS})
+                const data = cache.readQuery({query: GET_PERSON_WITH_CAR})
 
+                cache.writeQuery({
+                    query: GET_PERSON_WITH_CAR,
+                    data: {
+                        ...data,
+                        personWithCars: [...data.personWithCars, addPerson]
+                    }
+                })
+
+                const personData =  cache.readQuery({query: GET_PERSONS});
                 cache.writeQuery({
                     query: GET_PERSONS,
                     data: {
-                        ...data,
-                        persons: [...data.persons, addPerson]
+                        ...personData,
+                        persons: [...personData.persons, addPerson]
                     }
                 })
             }
-        })
+        });
+
+        form.resetFields();
     }
 
     return (
@@ -50,11 +60,15 @@ const AddPerson = () => {
             >
                 <Form.Item
                     name='firstName'
+                    label="First Name"
                     rules={[{ required: true, message: 'Please enter a first name' }]}
                 >
                     <Input placeholder='First Name' />
                 </Form.Item>
-                <Form.Item name='lastName' rules={[{ required: true, message: 'Please enter a last name' }]}>
+                <Form.Item 
+                name='lastName' 
+                label="Last Name"
+                rules={[{ required: true, message: 'Please enter a last name' }]}>
                     <Input placeholder='Last Name' />
                 </Form.Item>
                 <Form.Item shouldUpdate={true}>

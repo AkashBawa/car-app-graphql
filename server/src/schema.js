@@ -121,13 +121,15 @@ const typeDefs = `
         persons: [Person]
         car(id: String!): Car
         cars: [Car]
-        personWithCars: PersonWithCars
+        personWithCars: [PersonWithCars]
+        singlePersonWithCars(id: String!): PersonWithCars
     }
 
     type Mutation {
         addPerson(id: String!, firstName: String!, lastName: String!): Person
         updatePerson(id: String!, firstName: String, lastName: String): Person
         removePerson(id: String!): Person
+        addCar(id: String!,year: String!, make: String!, model: String!, price: String!, personId: String!): Car
         updateCar(id: String!, year: String!, make: String!, model: String!, price: String!, personId: String!): Car
         removeCar(id:String!): Car
     }
@@ -141,7 +143,7 @@ const resolvers = {
         persons:() => personArray,
         
         car: (root, args) => {
-            const foundCar = _.find(carArray, { id: args.id });
+            const foundCar = _.find(cars, { id: args.id });
             
             if (!foundCar) throw new Error(`No car with id ${args.id}`);
             
@@ -156,9 +158,23 @@ const resolvers = {
             let persons = [];
             for(let i = 0; i < personArray.length; i++) {
                 let person = {...personArray[i]};
-                person.cars = _.filter(cars, { personId: person.id });   
+                // console.log(person.id)
+                const individualCars = _.filter(cars, { personId: person.id });  
+                // console.log(individualCars);
+                person.cars = individualCars;
+                persons.push(person) 
             }
+
             return persons;
+        },
+
+        singlePersonWithCars: (root, args) => {
+            // console.log(args.id)
+            const foundCar = _.filter(cars, { personId: args.id });
+            const person = _.find(personArray, { id: args.id });
+
+            person.cars = foundCar;
+            return person;
         }
     },
 
@@ -193,23 +209,37 @@ const resolvers = {
             return contact;
         },
         removePerson: (root, args) => {
-            console.log(args.id)
+            // console.log(args.id)
             const contact = _.remove(personArray, { id: args.id});
-            console.log(contact)
+            // console.log(contact)
+            const removedCars = _.remove(cars, {personId: args.id})
             if(!contact){
                 throw new Error(`No such user exists to delete.`);
             }
             return contact[0];
         },
 
-        
+        addCar: (root, args) => {
+            const newCar = {
+                id: args.id,
+                year: args.year,
+                make: args.make,
+                model: args.model,
+                price: args.price,
+                personId: args.personId
+            }
+
+            cars.push(newCar);
+
+            return newCar
+        },
         updateCar:(root, args) => {
             let car = _.find(cars,{id : args.id});
 
             if(!car) {
                 throw new Error("The car you are trying to update does not exist.")
             }
-            console.log(car);
+            // console.log(car);
             car.make = args.make;
             car.model = args.model;
             car.personId = args.personId;
@@ -220,7 +250,7 @@ const resolvers = {
         },
         removeCar:(root, args) => {
             let car = _.remove(cars,{id : args.id});
-            console.log(car);
+            // console.log(car);
             if(!car) {
                 throw new Error (`Car with id ${args.id} does not exists`);
             }

@@ -8,11 +8,12 @@ const UpdatePerson = props => {
     const [form] = Form.useForm()
     const [, forceUpdate] = useState()
 
+    const styles = getStyles();
     const [updatePerson] = useMutation(UPDATE_PERSON)
 
     const onFinish = values => {
         console.log("submit")
-        const {firstName, lastName} = values;
+        const { firstName, lastName } = values;
 
         updatePerson({
             variables: {
@@ -29,42 +30,64 @@ const UpdatePerson = props => {
     }, [])
 
     return (
-        <Form
-            name='update-contact-form'
-            layout='inline'
-            form={form}
-            initialValues={{
-                firstName,
-                lastName
-            }}
-            onFinish={onFinish}
-        >
-            <Form.Item
-                name='firstName'
-                rules={[{ required: true, message: 'Please enter a first name' }]}
+        <>
+            <h1 style={styles.title}> Update Person</h1>
+            <Form
+                name='update-contact-form'
+                layout='inline'
+                form={form}
+                initialValues={{
+                    firstName,
+                    lastName
+                }}
+                onFinish={onFinish}
+                style={{justifyContent: "center"}}
             >
-                <Input placeholder='i.e. John' />
-            </Form.Item>
-            <Form.Item name='lastName' rules={[{ required: true, message: 'Please enter a last name' }]}>
-                <Input placeholder='i.e. Smith' />
-            </Form.Item>
-            <Form.Item shouldUpdate={true}>
-                {() => (
-                    <Button
-                        type='primary'
-                        htmlType='submit'
-                        disabled={
-                            (!form.isFieldTouched('firstName') && !form.isFieldTouched('lastName')) ||
-                            form.getFieldsError().filter(({ errors }) => errors.length).length
-                        }
-                    >
-                        Update Contact
-                    </Button>
-                )}
-            </Form.Item>
-            <Button onClick={props.onButtonClick}>Cancel</Button>
-        </Form>
+                <Form.Item
+                    name='firstName'
+                    label="First Name"
+                    rules={[{ required: true, message: 'Please enter a first name' }]}
+                >
+                    <Input placeholder='First Name' />
+                </Form.Item>
+                <Form.Item 
+                    name='lastName' 
+                    rules={[{ required: true, message: 'Please enter a last name' }]}
+                    label="Last Name"
+                    
+                >
+                    <Input placeholder='Last Name' />
+                </Form.Item>
+                <Form.Item shouldUpdate={true}>
+                    {() => (
+                        <Button
+                            type='primary'
+                            htmlType='submit'
+                            disabled={
+                                (!form.isFieldTouched('firstName') && !form.isFieldTouched('lastName')) ||
+                                form.getFieldsError().filter(({ errors }) => errors.length).length
+                            }
+                        >
+                            Update Contact
+                        </Button>
+                    )}
+                </Form.Item>
+                <Button onClick={props.onButtonClick}>Cancel</Button>
+            </Form>
+        </>
+
     )
 }
+
+const getStyles = () => {
+    return {
+        title: {
+            fontSize: 20,
+            padding: "15px",
+            textAlign: "center"
+        }
+    }
+}
+
 
 export default UpdatePerson
